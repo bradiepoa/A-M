@@ -26,7 +26,7 @@ const PORT = process.env.PORT || 8080;
 // show message in the browser
 app.get("/", (request,response)=>{
     response.json({
-        message : "Server is running"
+        message : "Server is running" + "", PORT
     })
 })
 
