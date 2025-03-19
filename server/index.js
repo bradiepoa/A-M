@@ -4,11 +4,10 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import helmet from 'helmet';
+import connectDB from './config/connectDB.js';
 
 dotenv.config();
-
 const app = express();
-
 // Apply CORS middleware
 app.use(cors({
     credentials: true,
@@ -30,6 +29,7 @@ app.get("/", (request,response)=>{
     })
 })
 
+connectDB
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
