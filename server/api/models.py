@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+from ckeditor.fields import RichTextField 
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
 class User(AbstractUser):
@@ -45,6 +47,28 @@ class Category(models.Model):
     def __str__(self):
         return self.title
 
+class Product(models.Model):
+    STATUS = (
+        ("published", "Published"),
+        ("draft", "Draft"),
+    )
 
+    name = models.CharField(max_length=255)
+    image = models.ImageField(upload_to="products", blank=True)
+    description = RichTextField()  # Corrected CKEditor field
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    regular_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)  # Fixed max_digits
 
+    stock = models.PositiveIntegerField(default=0, blank=True)
+    shipping = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    status = models.CharField(choices=STATUS, max_length=50, default="published")
+    feature = models.BooleanField(default=False, verbose_name="Marketplace featured")
 
+    vendor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)  # Fixed typo
+
+    date = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return self.name
+    
