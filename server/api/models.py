@@ -22,6 +22,20 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.email} ({self.role})"
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to="profiles",blank=True)
+    full_name = models.CharField(max_length=255)
+    mobile = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return self.user.username
+    def save(self, *args, **kwargs):
+        if not self.full_name:
+            self.full_name = self.user.username
+        super(Profile, self).save(*args, **kwargs)
     
 
 class Category(models.Model):
@@ -30,4 +44,7 @@ class Category(models.Model):
 
     def __str__(self):
         return self.title
+
+
+
 
