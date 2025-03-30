@@ -71,4 +71,24 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
-    
+
+
+class Variant(models.Model):  # Fix inheritance
+    product = models.ForeignKey(
+        "Product",on_delete=models.CASCADE, related_name="variants")
+    name = models.CharField(max_length=1000, verbose_name="Variant name")
+
+    def items(self):
+        return self.variant_items.all()
+
+    def __str__(self):
+        return self.name
+
+class VariantItem(models.Model):
+    variant = models.ForeignKey(Variant, on_delete=models.CASCADE, related_name="variant_items")
+    title = models.CharField(max_length=255, verbose_name="Title")
+    content = models.CharField(max_length=255, verbose_name="Content")
+
+    def __str__(self):
+        return self.title
+
