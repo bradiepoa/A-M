@@ -92,3 +92,26 @@ class VariantItem(models.Model):
     def __str__(self):
         return self.title
 
+
+class Cart(models.Model):
+    cart_id = models.CharField(max_length=255, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="carts")
+    product = models.ForeignKey(Variant, on_delete=models.CASCADE) 
+    size = models.CharField(max_length=50) 
+    color = models.CharField(max_length=50) 
+    qty = models.PositiveIntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    shipping = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        """Automatically calculate subtotal and total before saving."""
+        self.subtotal = self.price * self.qty
+        self.total = self.subtotal + self.shipping + self.tax
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Cart {self.cart_id} - {self.user if self.user else 'Guest'} - {self.product.name}"
