@@ -203,7 +203,7 @@ class Order(models.Model):
     service_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Platform/service fee
     initial_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Total before discount
     coupon = models.ForeignKey("Coupon", on_delete=models.SET_NULL, null=True, blank=True)  # Applied coupon
-    saves = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Amount saved from discounts
+    saved = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Amount saved from discounts
     total = models.DecimalField(max_digits=10, decimal_places=2)  # Final total after discounts
     payment_status = models.CharField(
         max_length=20, choices=PAYMENT_STATUS_CHOICES, default="pending"
@@ -234,3 +234,37 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.order_id} - {self.customer.username} - {self.order_status}"
+
+
+class OrderedItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="ordered_items")  # Link to Order
+    variant = models.ForeignKey(Variant, on_delete=models.CASCADE)  # Product variant being ordered
+    quantity = models.PositiveIntegerField(default=1)  # Quantity of the item ordered
+    price_per_item = models.DecimalField(max_digits=10, decimal_places=2)  # Price per unit of the variant
+    initial_total = models.DecimalField(max_digits=10, decimal_places=2)  # Price before coupon discount
+    total = models.DecimalField(max_digits=10, decimal_places=2)  # Total price after coupon discount
+    saved = models.DecimalField(max_digits=10, decimal_places=2)  # Total saved due to coupon
+    coupon = models.ManyToManyField(Coupon, blank=True)  # Applied coupon
+    applied_coupon = models.BooleanField(default=False)  # Whether the coupon was applied
+    item_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # Unique item identifier
+    vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="ordered_items")  # Vendor of the product
+    date = models.DateTimeField(default=timezone.now)  # Date when the item was added to the order
+
+    def save(self, *args, **kwargs):
+        """Automatically calculate totals before saving."""
+        self.initial_total = self.price_per_item * self.quantity  # Price before any discounts
+        if self.coupon and self.coupon.is_valid():
+            self.saved = self.initial_total - self.coupon.apply_discount(self.initial_total)  # Calculate savings
+            self.total = self.coupon.apply_discount(self.initial_total)  # Apply coupon discount
+            self.applied_coupon = True  # Mark as coupon applied
+        else:
+            self.saved = 0.00
+            self.total = self.initial_total
+            self.applied_coupon = False  # No coupon applied
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.variant.name} (x{self.quantity}) - {self.order.order_id}"
+
+
