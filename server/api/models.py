@@ -268,3 +268,31 @@ class OrderedItem(models.Model):
     def __str__(self):
         return f"{self.variant.name} (x{self.quantity}) - {self.order.order_id}"
 
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews", null=True, blank=True)  # Link to Product
+    variant = models.ForeignKey(Variant, on_delete=models.CASCADE, related_name="reviews", null=True, blank=True)  # Link to Variant (if applicable)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # The user leaving the review
+    rating = models.PositiveIntegerField(choices=[(1, '1 - Poor'), (2, '2 - Fair'), (3, '3 - Good'), (4, '4 - Very Good'), (5, '5 - Excellent')], default=None)  # Rating scale (1-5)
+    title = models.CharField(max_length=255)  # Review title
+    reply = models.TextField()  # Review content
+    created_at = models.DateTimeField(auto_now_add=True)  # Date and time when the review was created
+    updated_at = models.DateTimeField(auto_now=True)  # Date and time when the review was last updated
+    is_approved = models.BooleanField(default=False)  # Whether the review is approved by the admin
+
+
+    def __str__(self):
+        return f"Review by {self.user.username} for {self.product.name if self.product else self.variant.name}"
+
+    def approve(self):
+        """Method to approve the review"""
+        self.is_approved = True
+        self.save()
+
+    def disapprove(self):
+        """Method to disapprove the review"""
+        self.is_approved = False
+        self.save()
+
+    class Meta:
+        ordering = ['-created_at']  # Order reviews by newest first
