@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
-from ckeditor.fields import RichTextField 
+from ckeditor.fields import RichTextField
+from datetime import datetime, timedelta
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
 class User(AbstractUser):
@@ -96,7 +97,7 @@ class VariantItem(models.Model):
 class Cart(models.Model):
     cart_id = models.CharField(max_length=255, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="carts")
-    product = models.ForeignKey(Variant, on_delete=models.CASCADE) 
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     size = models.CharField(max_length=50) 
     color = models.CharField(max_length=50) 
     qty = models.PositiveIntegerField(default=1)
@@ -115,3 +116,48 @@ class Cart(models.Model):
 
     def __str__(self):
         return f"Cart {self.cart_id} - {self.user if self.user else 'Guest'} - {self.product.name}"
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=50, unique=True)  # Unique coupon code (e.g., "SAVE10")
+    discount_type = models.CharField(
+        max_length=10,
+        choices=[("fixed", "Fixed Amount"), ("percent", "Percentage")],
+        default="percent",
+    )  # Whether it's a percentage or fixed discount
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)  # Amount or percentage of discount
+    min_order_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Minimum cart total to apply
+    max_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Max discount cap (for percentage)
+    usage_limit = models.PositiveIntegerField(default=1)  # Number of times this coupon can be used
+    used_count = models.PositiveIntegerField(default=0)  # Number of times it has been used
+    is_active = models.BooleanField(default=True)  # Whether the coupon is currently active
+    start_date = models.DateTimeField(default=datetime.now)  # When the coupon starts
+    end_date = models.DateTimeField(default=datetime.now() + timedelta(days=30))  # Expiry date
+
+    def is_valid(self):
+        """Check if the coupon is valid."""
+        now = datetime.now()
+        return (
+            self.is_active
+            and self.start_date <= now <= self.end_date
+            and self.used_count < self.usage_limit
+        )
+
+    def apply_discount(self, total_amount):
+        """Apply discount to a given total."""
+        if not self.is_valid():
+            return total_amount  # No discount if the coupon is invalid
+
+        if self.discount_type == "percent":
+            discount = (self.discount_value / 100) * total_amount
+            if self.max_discount:
+                discount = min(discount, self.max_discount)  # Apply max discount cap if set
+        else:  # Fixed discount
+            discount = self.discount_value
+
+        return max(total_amount - discount, 0)  # Ensure total doesn't go below 0
+
+    def __str__(self):
+        return f"{self.code} - {self.discount_value}{'%' if self.discount_type == 'percent' else ''} Off"
+
+
