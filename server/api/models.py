@@ -3,6 +3,7 @@ from django.utils import timezone
 from ckeditor.fields import RichTextField
 from datetime import datetime, timedelta
 from django.contrib.auth.models import AbstractUser, Group, Permission
+import uuid
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -119,6 +120,7 @@ class Cart(models.Model):
 
 
 class Coupon(models.Model):
+    vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="coupons")  # Fixed typo 'vender' → 'vendor'
     code = models.CharField(max_length=50, unique=True)  # Unique coupon code (e.g., "SAVE10")
     discount_type = models.CharField(
         max_length=10,
@@ -131,12 +133,12 @@ class Coupon(models.Model):
     usage_limit = models.PositiveIntegerField(default=1)  # Number of times this coupon can be used
     used_count = models.PositiveIntegerField(default=0)  # Number of times it has been used
     is_active = models.BooleanField(default=True)  # Whether the coupon is currently active
-    start_date = models.DateTimeField(default=datetime.now)  # When the coupon starts
-    end_date = models.DateTimeField(default=datetime.now() + timedelta(days=30))  # Expiry date
+    start_date = models.DateTimeField(default=timezone.now)  # Start date using timezone-aware datetime
+    end_date = models.DateTimeField(default=timezone.now() + timedelta(days=30))  # Expiry date
 
     def is_valid(self):
         """Check if the coupon is valid."""
-        now = datetime.now()
+        now = timezone.now()
         return (
             self.is_active
             and self.start_date <= now <= self.end_date
@@ -157,7 +159,78 @@ class Coupon(models.Model):
 
         return max(total_amount - discount, 0)  # Ensure total doesn't go below 0
 
+    def increment_usage(self):
+        """Increment the used_count when the coupon is applied."""
+        if self.is_valid():
+            self.used_count += 1
+            self.save()
+
     def __str__(self):
         return f"{self.code} - {self.discount_value}{'%' if self.discount_type == 'percent' else ''} Off"
 
 
+class Order(models.Model):
+    ORDER_STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("shipped", "Shipped"),
+        ("delivered", "Delivered"),
+        ("canceled", "Canceled"),
+    ]
+
+    PAYMENT_STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+        ("refunded", "Refunded"),
+    ]
+
+    PAYMENT_METHOD_CHOICES = [
+        ("credit_card", "Credit Card"),
+        ("paypal", "PayPal"),
+        ("bank_transfer", "Bank Transfer"),
+        ("cod", "Cash on Delivery"),
+    ]
+
+    order_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # Unique order identifier
+    payment_id = models.CharField(max_length=255, blank=True, null=True)  # Payment transaction ID
+    vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="vendor_orders")  # Seller/vendor
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer_orders")  # Buyer/customer
+    address = models.TextField()  # Shipping address
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)  # Total before additional costs
+    shipping = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Shipping fee
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Tax amount
+    service_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Platform/service fee
+    initial_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Total before discount
+    coupon = models.ForeignKey("Coupon", on_delete=models.SET_NULL, null=True, blank=True)  # Applied coupon
+    saves = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Amount saved from discounts
+    total = models.DecimalField(max_digits=10, decimal_places=2)  # Final total after discounts
+    payment_status = models.CharField(
+        max_length=20, choices=PAYMENT_STATUS_CHOICES, default="pending"
+    )  # Payment status
+    payment_method = models.CharField(
+        max_length=20, choices=PAYMENT_METHOD_CHOICES, default="credit_card"
+    )  # Payment method
+    order_status = models.CharField(
+        max_length=20, choices=ORDER_STATUS_CHOICES, default="pending"
+    )  # Order processing status
+    date = models.DateTimeField(default=timezone.now)  # Order creation date
+
+    def calculate_totals(self):
+        """Calculate order totals and apply any coupon discount."""
+        self.initial_total = self.subtotal + self.shipping + self.tax + self.service_fee
+        if self.coupon and self.coupon.is_valid():
+            discounted_total = self.coupon.apply_discount(self.initial_total)
+            self.saves = self.initial_total - discounted_total
+            self.total = discounted_total
+        else:
+            self.total = self.initial_total
+            self.saves = 0.00
+
+    def save(self, *args, **kwargs):
+        """Auto-calculate totals before saving."""
+        self.calculate_totals()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Order {self.order_id} - {self.customer.username} - {self.order_status}"
