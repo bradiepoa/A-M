@@ -1,20 +1,9 @@
 from django.contrib import admin
-from . models import *
+from .models import *
+# Inline for Variants
 
-# Register your models here.
-class VariantInline(admin.TabularInline):
-    model = Variant
-
-
-class VariantItemInline(admin.TabularInline):
-    model = VariantItem
-
-
+@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display =['title', 'image']
-    list_editable = ['image']
-
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name','category','price','regular_price']
-
+    list_display = ('title',)
+    search_fields = ('title',)
 
