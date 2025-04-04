@@ -3,6 +3,7 @@ from django.utils import timezone
 from ckeditor.fields import RichTextField
 from datetime import datetime, timedelta
 from django.contrib.auth.models import AbstractUser, Group, Permission
+from shortuuidfield import ShortUUIDField
 import uuid
 
 class User(AbstractUser):
@@ -343,3 +344,17 @@ class Notification(models.Model):
         verbose_name_plural = "Notification"
     def __str__(self):
         return self.type
+
+
+
+class Vendor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, related_name="vendor")
+    image = models.ImageField(upload_to="vendors", blank=True)
+    store_name = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
+    country = models.CharField(max_length=100)
+    vendor_id = ShortUUIDField(unique=True, length=6, max_length=20, alphabet="1234567890")
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.store_name or f"Vendor {self.vendor_id}"
