@@ -295,4 +295,51 @@ class Review(models.Model):
         self.save()
 
     class Meta:
-        ordering = ['-created_at']  # Order reviews by newest first
+        ordering = ['-created_at']
+
+
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlist')  # lowercase
+
+    class Meta:
+        verbose_name_plural = 'wishlist'
+
+    def __str__(self):
+        return self.product.name if self.product.name else "wishlist"
+
+
+class Address(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=200)
+    mobile = models.CharField(max_length=200)
+    email = models.EmailField()
+    country = models.CharField(max_length=200)
+    state = models.CharField(max_length=200)
+    city = models.CharField(max_length=200)
+    address = models.CharField(max_length=200)
+    zip_code = models.CharField(max_length=200)
+
+    class Meta:
+        verbose_name_plural = "Customer Address"
+    
+    def __str__(self):
+        return self.full_name
+
+
+class Notification(models.Model):
+    TYPE = (
+        ('new order', 'new order'),
+        ('shipped item', 'shipped item'),
+        ('delivered item', 'delivered item')
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    type = models.CharField(max_length=100, choices=TYPE, default=None)
+    seen = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Notification"
+    def __str__(self):
+        return self.type
