@@ -1,38 +1,26 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.utils.translation import gettext_lazy as _
 
-class User(AbstractUser):
-    ROLE_CHOICES = (
-        ("customer", "Customer"),
-        ("vendor", "Vendor"),
-        ("healer", "Healer"),
-        ("doctor", "Doctor"),
-        ("herbalist", "Herbalist"),
-        ("non", "Non"),
-    )
-    username = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="non")
+class User(AbstractBaseUser, PermissionsMixin):
+    email=models.EmailField(max_length=255, unique=True, verbose_name=_("Email Address"))
+    first_name=models.CharField(max_length=200, verbose_name=_("First Name"))
+    last_name=models.CharField(max_length=200, verbose_name=_("Last Name"))
+    is_staff=models.BooleanField(default=False)
+    is_superviser=models.BooleanField(default=False)
+    is_verified=models.BooleanField(default=False)
+    is_active=models.BooleanField(default=False)
+    date_joined = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(auto_now=True)
 
-    groups = models.ManyToManyField(Group, related_name="custom_user_groups", blank=True)
-    user_permissions = models.ManyToManyField(Permission, related_name="custom_user_permissions", blank=True)
+    USER_NAME_FIELDS="email"
+    REQUIRED_FIELDS= ["first_name", "last_name"]
 
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["role"]
+    objects= UserManager()
 
     def __str__(self):
-        return f"{self.email} ({self.role})"
-
-
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to="profiles",blank=True)
-    full_name = models.CharField(max_length=255)
-    mobile = models.CharField(max_length=255)
+        return self.email
     
-    def __str__(self):
-        return self.user.username
-    def save(self, *args, **kwargs):
-        if not self.full_name:
-            self.full_name = self.user.username
-        super(Profile, self).save(*args, **kwargs)
+    def get_full_name(self):
+        return f"{self.first_name}  {self.last_name}"
+
