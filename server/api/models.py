@@ -353,8 +353,22 @@ class Vendor(models.Model):
     store_name = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
     country = models.CharField(max_length=100)
-    vendor_id = ShortUUIDField(unique=True, length=6, max_length=20, alphabet="1234567890")
+    vendor_id = ShortUUIDField(unique=True)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.store_name or f"Vendor {self.vendor_id}"
+
+
+class Payout(models.Model):
+    vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True)
+    item = models.ForeignKey(OrderedItem, on_delete=models.SET_NULL, null=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    payout_id = ShortUUIDField(unique=True)
+    date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payout {self.payout_id} - {self.vendor.store_name if self.vendor else 'Unknown Vendor'}"
+
+    class Meta:
+        ordering = ['-date']
