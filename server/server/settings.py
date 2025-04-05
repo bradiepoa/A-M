@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
+    'accounts',
     'ckeditor',
     'rest_framework',
     'corsheaders',
