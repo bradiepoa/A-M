@@ -21,7 +21,7 @@ def send_code_to_user(email):
 
     current_site = "myAth.com"
     email_body = (
-        f"Hi {user.first_name},\n\n"
+        f"Hi\n\n"
         f"Thanks for signing up on {current_site}!\n"
         f"Please verify your email with this one-time passcode: {otp_code}\n\n"
         f"If you did not request this, please ignore this email."

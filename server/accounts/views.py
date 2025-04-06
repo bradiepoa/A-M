@@ -9,7 +9,7 @@ from .utils import send_code_to_user
 class RegisterUserView(GenericAPIView):
     serializer_class = UserRegisterSerializer
 
-    def Post(self, request):
+    def post(self, request):
         User_data=request.data
         serializer=self.serializer_class(data=User_data)
         if serializer.is_valid(raise_exception=True):
@@ -19,7 +19,7 @@ class RegisterUserView(GenericAPIView):
             #send email function user['email']
             return Response({
                 'data':user,
-                'message':f'hi {user.first_name} Thanks for signing up a passcode has been sent to your email'
-            }, status=status.HTTTP_201_CREATED)
+                'message': f'Hi, thanks for signing up! A passcode has been sent to your email.'
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
