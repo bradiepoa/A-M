@@ -30,3 +30,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     def tokens(self):
         pass
 
+
+class OneTimePassword(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"{self.user.first_name} - passcode"
