@@ -30,5 +30,9 @@ class VerifyUserEmail(GenericAPIView):
         otpcode = request.data.get('otp')
         try:
             user_code_obj =OneTimePassword.objects.get(code=otpcode)
+            user=user_code_obj.user
+            if not user.is_varified:
+                user.variefied=True
+                user.save()
         except:
             pass
