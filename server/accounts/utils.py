@@ -19,7 +19,7 @@ def send_code_to_user(email):
     except User.DoesNotExist:
         return "User with this email does not exist."
 
-    current_site = "myAth.com"
+    current_site = "anmth.com"
     email_body = (
         f"Hi\n\n"
         f"Thanks for signing up on {current_site}!\n"

@@ -4,6 +4,7 @@ from .serializers import UserRegisterSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from .utils import send_code_to_user
+from .models import OneTimePassword
 
 
 class RegisterUserView(GenericAPIView):
@@ -22,4 +23,12 @@ class RegisterUserView(GenericAPIView):
                 'message': f'Hi, thanks for signing up! A passcode has been sent to your email.'
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
+class VerifyUserEmail(GenericAPIView):
+    def post(self, request):
+        otpcode = request.data.get('otp')
+        try:
+            user_code_obj =OneTimePassword.objects.get(code=otpcode)
+        except:
+            pass
