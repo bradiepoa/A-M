@@ -2,13 +2,13 @@ from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
-from .serializers import UserRegisterSerializer,LoginSerializer,PasswordResetRequestSerializer
+from .serializers import UserRegisterSerializer,LoginSerializer,SetNewPasswordSerializer,PasswordResetRequestSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .utils import send_code_to_user
 from .models import OneTimePassword, User
-from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
@@ -79,23 +79,54 @@ class TestAuthenticationView(GenericAPIView):
 
 
 class PasswordResetRequestView(GenericAPIView):
-    serializer_class =PasswordResetRequestSerializer
+    permission_classes = [AllowAny]
+    serializer_class = PasswordResetRequestSerializer
+
     def post(self, request):
-        serializer=self.serializer_class(data=request.data, context={'request':request})
-        serializer.is_valide(raise_exception=True)
-        Response({'message':'A link has been sent to your email to reset your password'}, status=status.HTTP_200_OK)
-
-
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        return Response(
+            {'message': 'A link has been sent to your email to reset your password'},
+            status=status.HTTP_200_OK
+        )
 
 
 class PasswordResetConfirm(GenericAPIView):
+    permission_classes = [AllowAny]
     def get(self, request, uidb64, token):
         try:
-            user_id=smart_str(urlsafe_base64_encode(uidb64))
-            user=User.objects.get(id=user_id)
+            user_id = smart_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(id=user_id)
+
             if not PasswordResetTokenGenerator().check_token(user, token):
-                return Response({'message':'token is inavalid or has expired'}, status=status.HTTP_401_UNAUTHORISED)
-            return Response({'success':True, 'message':'Credentials is invalid','uidb64':uidb64, 'token':token}, status=status.HTTP_200_OK)
+                return Response(
+                    {'message': 'Token is invalid or has expired'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            return Response({
+                'success': True,
+                'message': 'Token is valid. Proceed to reset password.',
+                'uidb64': uidb64,
+                'token': token
+            }, status=status.HTTP_200_OK)
 
         except DjangoUnicodeDecodeError:
-            return Response({'message':'token is inavalid or has expired'}, status=status.HTTP_401_UNAUTHORISED)
+            return Response(
+                {'message': 'Token is invalid or has expired'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        except User.DoesNotExist:
+            return Response(
+                {'message': 'User not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class SetNewPassword(GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class=SetNewPasswordSerializer
+    def patch(self, request):
+        serializer=self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response({'message':'Passsword reset succesful'}, status=status.HTTP_200_OK)
