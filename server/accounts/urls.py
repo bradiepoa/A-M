@@ -6,5 +6,6 @@ app_name= 'auth'
 urlpatterns = [
     path('register', RegisterUserView.as_view(), name="register"),
     path('varify-email/',VerifyUserEmail.as_view(), name='verify'),
-    path('login/', LoginUserView.as_view(), name='login')
+    path('login/', LoginUserView.as_view(), name='login'),
+    path('profile/', TestAuthenticationView.as_view(), name='granted'),
 ]
