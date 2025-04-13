@@ -5,15 +5,18 @@ from django.utils.translation import gettext_lazy as _
 from .manager import UserManager
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email=models.EmailField(max_length=255, unique=True, verbose_name=_("Email Address"))
-    first_name=models.CharField(max_length=200, verbose_name=_("First Name"))
-    last_name=models.CharField(max_length=200, verbose_name=_("Last Name"))
-    is_staff=models.BooleanField(default=False)
-    is_superviser=models.BooleanField(default=False)
-    is_verified=models.BooleanField(default=False)
-    is_active=models.BooleanField(default=False)
+    email = models.EmailField(max_length=255, unique=True, verbose_name=_("Email Address"))
+    first_name = models.CharField(max_length=200, verbose_name=_("First Name"))
+    last_name = models.CharField(max_length=200, verbose_name=_("Last Name"))
+    role = models.CharField(max_length=255, default='Shop', blank=True)
+
+    is_staff = models.BooleanField(default=False)
+    is_superviser = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now=True, null=True)
+    auth_provider = models.CharField(max_length=50, default='Google', blank=True)
 
     USERNAME_FIELD = 'email'
     
