@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'accounts',
+    'social_accounts',
     'ckeditor',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
