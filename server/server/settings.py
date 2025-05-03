@@ -154,3 +154,12 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 2525
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'noreply@a&m.com'  # You can customize this
+
+# social auth
+GOOGLE_CLIENT_ID = '15896706404-0cc77r9a8oi9j3ro16dihhl6og6thm9j.apps.googleusercontent.com'
+GOOGLE_CLIENT_SECRETE = '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'
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
