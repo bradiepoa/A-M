@@ -23,7 +23,7 @@ class Google:
             raise AuthenticationFailed("Token is invalid or expired")
 
 
-def login_user(email, password):
+def login_social_user(email, password):
     user = authenticate(email=email, password=password)
     if not user:
         raise AuthenticationFailed("Invalid credentials.")
@@ -41,7 +41,7 @@ def register_social_user(provider, email, first_name, last_name):
     try:
         user = User.objects.get(email=email)
         if user.auth_provider == provider:
-            return login_user(email=email, password=settings.SOCIAL_AUTH_PASSWORD)
+            login_social_user(email=email, password=settings.SOCIAL_AUTH_PASSWORD)
         else:
             raise AuthenticationFailed(
                 detail=f"Please continue your login using {user.auth_provider}"
@@ -56,4 +56,4 @@ def register_social_user(provider, email, first_name, last_name):
         new_user.auth_provider = provider
         new_user.is_verified = True  # Optional: make sure this field exists
         new_user.save()
-        return login_user(email=new_user.email, password=settings.SOCIAL_AUTH_PASSWORD)
+        login_social_user(email=new_user.email, password=settings.SOCIAL_AUTH_PASSWORD)
