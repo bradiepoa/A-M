@@ -30,7 +30,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def get_full_name(self):
-        return f"{self.first_name}  {self.last_name}"
+        return f"{self.first_name} - {self.last_name}"
     
     def tokens(self):
         refresh=RefreshToken.for_user(self)
@@ -38,7 +38,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             'refresh':str(refresh),
             'access':str(refresh.access_token)
         }
-
 
 class OneTimePassword(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
