@@ -3,5 +3,5 @@ from .views import GoogleSignInView
 
 app_name="social_accounts"
 urlpatterns=[
-    path('google/', GoogleSignInView.as_views(), name='google'),
+    path('google/', GoogleSignInView.as_view(), name='google'),
 ]
