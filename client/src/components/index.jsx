@@ -12,6 +12,6 @@ export {
     Login,
     Profile,
     ForgetPassword,
-    // VerifyEmail
+    VerifyEmail
 
 }

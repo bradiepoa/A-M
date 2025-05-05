@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Signup from './components/Signup'
+// import Signup from './Signup'
 import './App.css'
 
 function App() {
