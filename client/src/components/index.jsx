@@ -1,4 +1,4 @@
-import Signup from './components/Signup'
+import Signup from './Signup'
 import Login from './components/Login'
 import Profile from './components/Profile'
 import VerifyEmail from './components/VerifyEmail'
@@ -12,6 +12,6 @@ export {
     Login,
     Profile,
     ForgetPassword,
-    VerifyEmail
+    // VerifyEmail
 
 }
